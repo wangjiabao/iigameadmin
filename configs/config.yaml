@@ -1,0 +1,17 @@
+server:
+  http:
+    addr: 0.0.0.0:6001
+    timeout: 1800s
+  grpc:
+    addr: 0.0.0.0:9000
+    timeout: 1s
+data:
+  database:
+    driver: mysql
+    source: game:5Y2nwJa8B6scpFZT@tcp(127.0.0.1:3306)/game?parseTime=true
+  redis:
+    addr: 127.0.0.1:6379
+    read_timeout: 0.2s
+    write_timeout: 0.2s
+auth:
+  jwt_key: 77037723115d7687c63b258b3cb1d19b # md5 dhbmachine
