@@ -114,6 +114,7 @@ const (
 	App_SetAdminMessages_FullMethodName       = "/api.app.v1.App/SetAdminMessages"
 	App_DeleteAdminMessages_FullMethodName    = "/api.app.v1.App/DeleteAdminMessages"
 	App_AdminMessagesList_FullMethodName      = "/api.app.v1.App/AdminMessagesList"
+	App_AdminUserStakeList_FullMethodName     = "/api.app.v1.App/AdminUserStakeList"
 )
 
 // AppClient is the client API for App service.
@@ -298,6 +299,8 @@ type AppClient interface {
 	SetAdminMessages(ctx context.Context, in *SetAdminMessagesRequest, opts ...grpc.CallOption) (*SetAdminMessagesReply, error)
 	DeleteAdminMessages(ctx context.Context, in *DeleteAdminMessagesRequest, opts ...grpc.CallOption) (*DeleteAdminMessagesReply, error)
 	AdminMessagesList(ctx context.Context, in *AdminMessagesListRequest, opts ...grpc.CallOption) (*AdminMessagesListReply, error)
+	// 用户
+	AdminUserStakeList(ctx context.Context, in *AdminUserStakeListRequest, opts ...grpc.CallOption) (*AdminUserStakeListReply, error)
 }
 
 type appClient struct {
@@ -1163,6 +1166,15 @@ func (c *appClient) AdminMessagesList(ctx context.Context, in *AdminMessagesList
 	return out, nil
 }
 
+func (c *appClient) AdminUserStakeList(ctx context.Context, in *AdminUserStakeListRequest, opts ...grpc.CallOption) (*AdminUserStakeListReply, error) {
+	out := new(AdminUserStakeListReply)
+	err := c.cc.Invoke(ctx, App_AdminUserStakeList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServer is the server API for App service.
 // All implementations must embed UnimplementedAppServer
 // for forward compatibility
@@ -1345,6 +1357,8 @@ type AppServer interface {
 	SetAdminMessages(context.Context, *SetAdminMessagesRequest) (*SetAdminMessagesReply, error)
 	DeleteAdminMessages(context.Context, *DeleteAdminMessagesRequest) (*DeleteAdminMessagesReply, error)
 	AdminMessagesList(context.Context, *AdminMessagesListRequest) (*AdminMessagesListReply, error)
+	// 用户
+	AdminUserStakeList(context.Context, *AdminUserStakeListRequest) (*AdminUserStakeListReply, error)
 	mustEmbedUnimplementedAppServer()
 }
 
@@ -1636,6 +1650,9 @@ func (UnimplementedAppServer) DeleteAdminMessages(context.Context, *DeleteAdminM
 }
 func (UnimplementedAppServer) AdminMessagesList(context.Context, *AdminMessagesListRequest) (*AdminMessagesListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminMessagesList not implemented")
+}
+func (UnimplementedAppServer) AdminUserStakeList(context.Context, *AdminUserStakeListRequest) (*AdminUserStakeListReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminUserStakeList not implemented")
 }
 func (UnimplementedAppServer) mustEmbedUnimplementedAppServer() {}
 
@@ -3360,6 +3377,24 @@ func _App_AdminMessagesList_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminUserStakeList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminUserStakeListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminUserStakeList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminUserStakeList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminUserStakeList(ctx, req.(*AdminUserStakeListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // App_ServiceDesc is the grpc.ServiceDesc for App service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -3746,6 +3781,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminMessagesList",
 			Handler:    _App_AdminMessagesList_Handler,
+		},
+		{
+			MethodName: "AdminUserStakeList",
+			Handler:    _App_AdminUserStakeList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

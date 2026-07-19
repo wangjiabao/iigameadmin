@@ -68,6 +68,7 @@ const OperationAppAdminUserList = "/api.app.v1.App/AdminUserList"
 const OperationAppAdminUserRecommend = "/api.app.v1.App/AdminUserRecommend"
 const OperationAppAdminUserSendLandList = "/api.app.v1.App/AdminUserSendLandList"
 const OperationAppAdminUserSendList = "/api.app.v1.App/AdminUserSendList"
+const OperationAppAdminUserStakeList = "/api.app.v1.App/AdminUserStakeList"
 const OperationAppAdminWithdraw = "/api.app.v1.App/AdminWithdraw"
 const OperationAppAdminWithdrawList = "/api.app.v1.App/AdminWithdrawList"
 const OperationAppBuy = "/api.app.v1.App/Buy"
@@ -209,6 +210,8 @@ type AppHTTPServer interface {
 	AdminUserSendLandList(context.Context, *AdminSendLandListRequest) (*AdminSendLandListReply, error)
 	// AdminUserSendList 管理员发放道具
 	AdminUserSendList(context.Context, *AdminSendListRequest) (*AdminSendListReply, error)
+	// AdminUserStakeList 用户
+	AdminUserStakeList(context.Context, *AdminUserStakeListRequest) (*AdminUserStakeListReply, error)
 	// AdminWithdraw 提现处理
 	AdminWithdraw(context.Context, *AdminWithdrawRequest) (*AdminWithdrawReply, error)
 	// AdminWithdrawList 提现
@@ -393,6 +396,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.POST("/api/admin_dhb/set_admin_messages", _App_SetAdminMessages0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/delete_admin_messages", _App_DeleteAdminMessages0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/admin_messages_list", _App_AdminMessagesList0_HTTP_Handler(srv))
+	r.GET("/api/admin_dhb/user_stake_list", _App_AdminUserStakeList0_HTTP_Handler(srv))
 }
 
 func _App_TestSign0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
@@ -2299,6 +2303,25 @@ func _App_AdminMessagesList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Conte
 	}
 }
 
+func _App_AdminUserStakeList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminUserStakeListRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminUserStakeList)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminUserStakeList(ctx, req.(*AdminUserStakeListRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminUserStakeListReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AppHTTPClient interface {
 	AdminDaily(ctx context.Context, req *AdminDailyRequest, opts ...http.CallOption) (rsp *AdminDailyReply, err error)
 	AdminDailyReward(ctx context.Context, req *AdminDailyRewardRequest, opts ...http.CallOption) (rsp *AdminDailyRewardReply, err error)
@@ -2349,6 +2372,7 @@ type AppHTTPClient interface {
 	AdminUserRecommend(ctx context.Context, req *AdminUserRecommendRequest, opts ...http.CallOption) (rsp *AdminUserRecommendReply, err error)
 	AdminUserSendLandList(ctx context.Context, req *AdminSendLandListRequest, opts ...http.CallOption) (rsp *AdminSendLandListReply, err error)
 	AdminUserSendList(ctx context.Context, req *AdminSendListRequest, opts ...http.CallOption) (rsp *AdminSendListReply, err error)
+	AdminUserStakeList(ctx context.Context, req *AdminUserStakeListRequest, opts ...http.CallOption) (rsp *AdminUserStakeListReply, err error)
 	AdminWithdraw(ctx context.Context, req *AdminWithdrawRequest, opts ...http.CallOption) (rsp *AdminWithdrawReply, err error)
 	AdminWithdrawList(ctx context.Context, req *AdminWithdrawListRequest, opts ...http.CallOption) (rsp *AdminWithdrawListReply, err error)
 	Buy(ctx context.Context, req *BuyRequest, opts ...http.CallOption) (rsp *BuyReply, err error)
@@ -3034,6 +3058,19 @@ func (c *AppHTTPClientImpl) AdminUserSendList(ctx context.Context, in *AdminSend
 	pattern := "/api/admin_dhb/admin_send_list"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAppAdminUserSendList))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminUserStakeList(ctx context.Context, in *AdminUserStakeListRequest, opts ...http.CallOption) (*AdminUserStakeListReply, error) {
+	var out AdminUserStakeListReply
+	pattern := "/api/admin_dhb/user_stake_list"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppAdminUserStakeList))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

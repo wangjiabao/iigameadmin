@@ -350,6 +350,7 @@ type StakeGitRecord struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Day       uint64
+	Price     float64
 }
 
 type Withdraw struct {
@@ -628,6 +629,8 @@ type UserRepo interface {
 	GetAdminMessages(ctx context.Context) ([]*AdminMessage, error)
 	CreateMessages(ctx context.Context, contentTwo, content string) error
 	DeleteMessages(ctx context.Context, id uint64) error
+	GetStakeGitRecordsByUserIDIspayRecordCount(ctx context.Context, userId uint64) (int64, error)
+	GetStakeGitRecordsByUserIDIspayRecord(ctx context.Context, userID int64, b *Pagination) ([]*StakeGitRecord, error)
 }
 
 // AppUsecase is an app usecase.
@@ -6206,6 +6209,83 @@ func (ac *AppUsecase) AdminGetConfig(ctx context.Context, req *pb.AdminGetConfig
 	}
 
 	return &pb.AdminGetConfigReply{Status: "ok", List: res}, nil
+}
+
+func (ac *AppUsecase) AdminUserStakeList(ctx context.Context, req *pb.AdminUserStakeListRequest) (*pb.AdminUserStakeListReply, error) {
+	var (
+		count     int64
+		err       error
+		user      *User
+		userId    uint64
+		userStake []*StakeGitRecord
+	)
+
+	if 0 < len(req.Address) {
+		user, err = ac.userRepo.GetUserByAddress(ctx, req.Address) // 查询用户
+		if nil != err || nil == user {
+			return &pb.AdminUserStakeListReply{
+				Status: "不存在用户",
+			}, nil
+		}
+		userId = user.ID
+	}
+
+	userRes := make([]*pb.AdminUserStakeListReply_ListStake, 0)
+
+	count, err = ac.userRepo.GetStakeGitRecordsByUserIDIspayRecordCount(ctx, userId)
+	if nil != err {
+		return &pb.AdminUserStakeListReply{
+			Status:    "ok",
+			StakeList: userRes,
+			Count:     count,
+		}, nil
+	}
+
+	userStake, err = ac.userRepo.GetStakeGitRecordsByUserIDIspayRecord(ctx, int64(userId), &Pagination{
+		PageNum:  int(req.Page),
+		PageSize: 20,
+	})
+	if nil != err {
+		return &pb.AdminUserStakeListReply{
+			Status:    "ok",
+			StakeList: userRes,
+			Count:     count,
+		}, nil
+	}
+
+	userIds := make([]uint64, 0)
+	for _, v := range userStake {
+		userIds = append(userIds, v.UserId)
+	}
+
+	usersMap := make(map[uint64]*User)
+	usersMap, err = ac.userRepo.GetUserByUserIds(ctx, userIds)
+	if nil != err {
+		return &pb.AdminUserStakeListReply{
+			Status: "错误查询",
+		}, nil
+	}
+
+	for _, v := range userStake {
+		addressTmp := ""
+		if _, ok := usersMap[v.UserId]; ok {
+			addressTmp = usersMap[v.UserId].Address
+		}
+
+		userRes = append(userRes, &pb.AdminUserStakeListReply_ListStake{
+			Address:   addressTmp,
+			Amount:    v.Amount,
+			Status:    uint64(v.StakeType),
+			CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Price:     v.Price,
+		})
+	}
+
+	return &pb.AdminUserStakeListReply{
+		Status:    "ok",
+		StakeList: userRes,
+		Count:     count,
+	}, nil
 }
 
 func (ac *AppUsecase) AdminSetConfig(ctx context.Context, req *pb.AdminSetConfigRequest) (*pb.AdminSetConfigReply, error) {

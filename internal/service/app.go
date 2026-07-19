@@ -961,6 +961,10 @@ func (a *AppService) LandPlayOne(ctx context.Context, req *pb.LandPlayOneRequest
 	return a.ac.LandPlayOne(ctx, address, req)
 }
 
+func (a *AppService) AdminUserStakeList(ctx context.Context, req *pb.AdminUserStakeListRequest) (*pb.AdminUserStakeListReply, error) {
+	return a.ac.AdminUserStakeList(ctx, req)
+}
+
 func (a *AppService) LandPlayTwo(ctx context.Context, req *pb.LandPlayTwoRequest) (*pb.LandPlayTwoReply, error) {
 	// 在上下文 context 中取出 claims 对象
 	var (
